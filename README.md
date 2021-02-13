@@ -20,7 +20,7 @@ Instructions [here](https://core.telegram.org/bots#3-how-do-i-create-a-bot) for 
 Just invoke `go build`
 
 # Running
-`./phcovidtracker -ta file.csv -d 2021-02-11 -l http://bit.ly/3rJLY6Y -tc telegram.json`
+`./covidphtesttracker -ta file.csv -d 2021-02-11 -l http://bit.ly/3rJLY6Y -tc telegram.json`
 ## Flags
 1. `-ta`: Testing Aggregates CSV file downloaded from https://doh.gov.ph/covid19tracker
 2. `-d`: Date to check
