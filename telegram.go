@@ -3,35 +3,15 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
-	"os"
 )
 
 type TelegramConfig struct {
 	ChatID string `json:"chat_id"`
 	BotID  string `json:"bot_id"`
 	URL    string `json:"url"`
-}
-
-func parseConfig(path string) TelegramConfig {
-	telegramConfiguration := TelegramConfig{}
-	configFile, err := os.Open(path)
-	if err != nil {
-		log.Fatal("Cannot open telegram configuration file: ", err)
-	}
-	defer configFile.Close()
-	dec := json.NewDecoder(configFile)
-	if err = dec.Decode(&telegramConfiguration); errors.Is(err, io.EOF) {
-		//do nothing
-	} else if err != nil {
-		log.Fatal("Cannot load telegram configuration file: ", err)
-	}
-	return telegramConfiguration
 }
 
 func sendMessage(config TelegramConfig, message string) error {

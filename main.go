@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/csv"
+	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -23,6 +25,9 @@ const (
 	Positive                    = 5
 	Status                      = 17
 )
+
+type Config struct {
+}
 
 func main() {
 	telegramPath := flag.String("tc", "telegram.json", "Telegram config file")
@@ -46,6 +51,22 @@ func main() {
 	fmt.Println(message)
 	telegramConfig := parseConfig(*telegramPath)
 	sendMessage(telegramConfig, message)
+}
+
+func parseConfig(path string) TelegramConfig {
+	telegramConfiguration := TelegramConfig{}
+	configFile, err := os.Open(path)
+	if err != nil {
+		log.Fatal("Cannot open telegram configuration file: ", err)
+	}
+	defer configFile.Close()
+	dec := json.NewDecoder(configFile)
+	if err = dec.Decode(&telegramConfiguration); errors.Is(err, io.EOF) {
+		//do nothing
+	} else if err != nil {
+		log.Fatal("Cannot load telegram configuration file: ", err)
+	}
+	return telegramConfiguration
 }
 
 func readTest(filepath, checkDate string) (TestingRow, error) {
