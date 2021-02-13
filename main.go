@@ -28,7 +28,7 @@ func main() {
 	telegramPath := flag.String("tc", "telegram.json", "Telegram config file")
 	testPath := flag.String("ta", "", "Testing Aggregates csv file")
 	date := flag.String("d", "", "Date to check")
-	link := flag.String("l", "", "Link to source")
+	link := flag.String("l", "", "Link to source") // TODO: Download csv file straight from this link
 	flag.Parse()
 	if *date == "" || *link == "" || *testPath == "" {
 		flag.PrintDefaults()
@@ -41,6 +41,7 @@ func main() {
 	if test.UniqueTested == 0 {
 		log.Fatalf("No unique tests for date: %s\n", *date)
 	}
+	// TODO: Consider moving message format to telegram config
 	message := fmt.Sprintf("[%s](%s): `%.2f%%` positivity `(%.0f/%.0f)`\n", *date, *link, test.Positive*100/test.UniqueTested, test.Positive, test.UniqueTested)
 	fmt.Println(message)
 	telegramConfig := parseConfig(*telegramPath)
@@ -83,6 +84,10 @@ func readTest(filepath, checkDate string) (TestingRow, error) {
 			log.Printf("scan positive (%s) error: %v\n", row[Positive], err)
 		}
 		test.Positive += positive
+
+		// REVIEW: Maybe consider "For Review" status. Discard?
 	}
 	return test, nil
 }
+
+// TODO: (Stretch) Download revisions and edit sent messages?
