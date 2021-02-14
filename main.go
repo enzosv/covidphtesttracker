@@ -34,7 +34,7 @@ type Config struct {
 func main() {
 	configPath := flag.String("c", "config.json", "Config file")
 	date := flag.String("d", "", "Date to check")
-	link := flag.String("l", "", "Link to source") // TODO: Download csv file straight from this link
+	link := flag.String("l", "", "Link to source")
 	flag.Parse()
 	if *date == "" || *link == "" || *configPath == "" {
 		flag.PrintDefaults()
@@ -57,7 +57,7 @@ func main() {
 		log.Fatalf("No unique tests for date: %s\n", *date)
 	}
 	// TODO: Consider moving message format to telegram config
-	message := fmt.Sprintf("[%s](%s): `%.2f%%` positivity `(%.0f/%.0f)`\n", *date, *link, test.Positive*100/test.UniqueTested, test.Positive, test.UniqueTested)
+	message := fmt.Sprintf("[%s](%s): *%.2f%%* positivity (%.0f/%.0f)", *date, *link, test.Positive*100/test.UniqueTested, test.Positive, test.UniqueTested)
 	fmt.Println(message)
 
 	sendMessage(config.TelegramConfig, message)
@@ -104,15 +104,19 @@ func readTest(filepath, checkDate string) (TestingRow, error) {
 		if date != checkDate {
 			continue
 		}
+		if row[UniqueTested] == "" {
+			continue
+		}
 		unique, err := strconv.ParseFloat(row[UniqueTested], 64)
 		if err != nil {
-			fmt.Printf("scan unique (%s) error: %v\n", row[UniqueTested], err)
+			fmt.Printf("scan unique (%s) error: %v. Positive: %s\n", row[UniqueTested], err, row[Positive])
 			continue
 		}
 		test.UniqueTested += unique
 		positive, err := strconv.ParseFloat(row[Positive], 64)
 		if err != nil {
 			fmt.Printf("scan positive (%s) error: %v\n", row[Positive], err)
+			continue
 		}
 		test.Positive += positive
 
