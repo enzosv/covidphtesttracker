@@ -69,7 +69,6 @@ func ProcessTesting(config Config, date string) error {
 	if test.UniqueTested == 0 {
 		return fmt.Errorf("No unique tests for date: %s\n", date)
 	}
-
 	// telegram
 	// TODO: Consider moving message format to telegram config
 	message := fmt.Sprintf("[%s](%s)\n*%.2f%%* positivity (%.0f/%.0f)", date, link, test.Positive*100/test.UniqueTested, test.Positive, test.UniqueTested)
