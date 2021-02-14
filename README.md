@@ -8,9 +8,11 @@ Inspired by the good work being done over at [PH Coronavirus Updates](https://t.
 
 # What it does
 
-1. Download Testing Aggregates csv from provided Google Drive link
-2. Iterate through csv and add `daily_output_unique_individuals` and `daily_output_positive_individuals` grouped by provided date
-3. Send message to telegram
+1. Download Read me from [data drop](http://bit.ly/DataDropPH)
+2. Parse links from read me
+3. Download Testing Aggregates csv from links
+4. Collate `daily_output_unique_individuals` and `daily_output_positive_individuals` grouped by provided date from csv
+5. Send message to telegram
 
 # Requirements
 
