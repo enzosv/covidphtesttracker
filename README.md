@@ -21,15 +21,18 @@ Inspired by the good work being done over at [PH Coronavirus Updates](https://t.
 
   ```json
   {
-    "telegram": {
-      "chat_id": "",
-      "bot_id": "",
-      "url": "https://api.telegram.org"
+    "telegram":{
+        "chat_id":"",
+        "bot_id":"",
+        "url": "https://api.telegram.org"
     },
-    "gdrive": {
-      "api_key": "",
-      "url": "https://www.googleapis.com/drive/v2/files",
-      "filename_substring": "Testing Aggregates.csv"
+    "gdrive":{
+        "api_key":"",
+        "url": "https://www.googleapis.com/drive/v2/files",
+        "test_substring": "Testing Aggregates.csv",
+        "link_substring": "bit.ly/",
+        "readme_substring": "READ ME FIRST",
+        "daily_url": "http://bit.ly/DataDropPH"
     }
   }
   ```
@@ -38,8 +41,8 @@ Inspired by the good work being done over at [PH Coronavirus Updates](https://t.
 - Instructions [here](https://developers.google.com/drive/api/v2/enable-drive-api) for enabling Google Drive API
 
 # Building
-
-Just invoke `go build`
+1. `go get -d`
+2. `go build`
 
 # Running
 
@@ -54,4 +57,3 @@ Just invoke `go build`
 
 1. `-c`: Path to config.json file
 2. `-d`: Date to check
-3. `-l`: Link to the Google Drive folder containing the DOH files
