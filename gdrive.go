@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -27,6 +28,7 @@ type FileList struct {
 type ListedFile struct {
 	Title       string `json:"title"`
 	DownloadURL string `json:"downloadUrl"`
+	MimeType    string `json:"mimeType"`
 }
 
 func getRedirectURL(link string) (*url.URL, error) {
@@ -47,7 +49,7 @@ func getFolderID(link url.URL) string {
 	return chunks[len(chunks)-1]
 }
 
-func (c GDriveConfig) getFileUrl(folderID, fileSubstring string) (string, error) {
+func (c GDriveConfig) getFileUrl(folderID, mime, fileSubstring string) (string, error) {
 	req, err := http.NewRequest("GET", c.URL, nil)
 	if err != nil {
 		return "", fmt.Errorf("gdrive: error constructing list request %w", err)
@@ -58,6 +60,7 @@ func (c GDriveConfig) getFileUrl(folderID, fileSubstring string) (string, error)
 	q.Add("key", c.ApiKey)
 
 	req.URL.RawQuery = q.Encode()
+	fmt.Println(req.URL.String())
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("gdrive: error performing list request %w", err)
@@ -73,7 +76,7 @@ func (c GDriveConfig) getFileUrl(folderID, fileSubstring string) (string, error)
 		return "", fmt.Errorf("gdrive: error parsing list response %w", err)
 	}
 	for _, f := range list.Items {
-		if strings.Contains(f.Title, fileSubstring) {
+		if f.MimeType == mime && strings.Contains(f.Title, fileSubstring) {
 			return f.DownloadURL, nil
 		}
 	}
@@ -82,7 +85,8 @@ func (c GDriveConfig) getFileUrl(folderID, fileSubstring string) (string, error)
 }
 
 func (c GDriveConfig) download(folderID, downloadPath, mime, substring string) error {
-	url, err := c.getFileUrl(folderID, substring)
+	log.Printf("\n\t[INFO] Downloading %s\n\n", substring)
+	url, err := c.getFileUrl(folderID, mime, substring)
 	if err != nil {
 		return err
 	}
