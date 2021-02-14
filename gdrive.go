@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -13,6 +14,10 @@ type GDriveConfig struct {
 	ApiKey            string `json:"api_key"`
 	URL               string `json:"url"`
 	FilenameSubstring string `json:"filename_substring"`
+}
+
+type FileList struct {
+	Items []ListedFile `json:"items"`
 }
 
 type ListedFile struct {
@@ -33,8 +38,9 @@ func getCsvUrl(config GDriveConfig, id string) (string, error) {
 	}
 
 	q := req.URL.Query()
+	q.Add("q", fmt.Sprintf(`'%s' in parents`, id))
 	q.Add("key", config.ApiKey)
-	q.Add("q", fmt.Sprintf("'%s'+in+parents", id))
+
 	req.URL.RawQuery = q.Encode()
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -45,12 +51,12 @@ func getCsvUrl(config GDriveConfig, id string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("gdrive: error reading list response %w", err)
 	}
-	var files []ListedFile
-	err = json.Unmarshal(body, &files)
+	var list FileList
+	err = json.Unmarshal(body, &list)
 	if err != nil {
 		return "", fmt.Errorf("gdrive: error parsing list response %w", err)
 	}
-	for _, f := range files {
+	for _, f := range list.Items {
 		if strings.Contains(f.Title, config.FilenameSubstring) {
 			return f.DownloadURL, nil
 		}
@@ -77,5 +83,10 @@ func downloadCSV(config GDriveConfig, link, downloadPath string) error {
 	if err != nil {
 		return fmt.Errorf("gdrive: error allocating csv %w", err)
 	}
-	return out.Close()
+	defer out.Close()
+	_, err = io.Copy(out, res.Body)
+	if err != nil {
+		return fmt.Errorf("gdrive: error downloading csv %w", err)
+	}
+	return nil
 }

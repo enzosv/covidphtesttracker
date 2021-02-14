@@ -27,19 +27,29 @@ const (
 )
 
 type Config struct {
+	TelegramConfig TelegramConfig `json:"telegram"`
+	GDriveConfig   GDriveConfig   `json:"gdrive"`
 }
 
 func main() {
-	telegramPath := flag.String("tc", "telegram.json", "Telegram config file")
-	testPath := flag.String("ta", "", "Testing Aggregates csv file")
+	configPath := flag.String("c", "config.json", "Config file")
 	date := flag.String("d", "", "Date to check")
 	link := flag.String("l", "", "Link to source") // TODO: Download csv file straight from this link
 	flag.Parse()
-	if *date == "" || *link == "" || *testPath == "" {
+	if *date == "" || *link == "" || *configPath == "" {
 		flag.PrintDefaults()
 		return
 	}
-	test, err := readTest(*testPath, *date)
+	config, err := parseConfig(*configPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	csvPath := fmt.Sprintf("testaggregates/%s.csv", *date)
+	err = downloadCSV(config.GDriveConfig, *link, csvPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	test, err := readTest(csvPath, *date)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,24 +59,24 @@ func main() {
 	// TODO: Consider moving message format to telegram config
 	message := fmt.Sprintf("[%s](%s): `%.2f%%` positivity `(%.0f/%.0f)`\n", *date, *link, test.Positive*100/test.UniqueTested, test.Positive, test.UniqueTested)
 	fmt.Println(message)
-	telegramConfig := parseConfig(*telegramPath)
-	sendMessage(telegramConfig, message)
+
+	sendMessage(config.TelegramConfig, message)
 }
 
-func parseConfig(path string) TelegramConfig {
-	telegramConfiguration := TelegramConfig{}
+func parseConfig(path string) (Config, error) {
+	configuration := Config{}
 	configFile, err := os.Open(path)
 	if err != nil {
-		log.Fatal("Cannot open telegram configuration file: ", err)
+		return configuration, fmt.Errorf("Cannot open configuration file: %w", err)
 	}
 	defer configFile.Close()
 	dec := json.NewDecoder(configFile)
-	if err = dec.Decode(&telegramConfiguration); errors.Is(err, io.EOF) {
+	if err = dec.Decode(&configuration); errors.Is(err, io.EOF) {
 		//do nothing
 	} else if err != nil {
-		log.Fatal("Cannot load telegram configuration file: ", err)
+		return configuration, fmt.Errorf("Cannot load configuration file: %w", err)
 	}
-	return telegramConfiguration
+	return configuration, nil
 }
 
 func readTest(filepath, checkDate string) (TestingRow, error) {
@@ -87,7 +97,7 @@ func readTest(filepath, checkDate string) (TestingRow, error) {
 			break
 		}
 		if err != nil {
-			log.Printf("read error: %v\n", err)
+			fmt.Printf("read error: %v\n", err)
 			continue
 		}
 		date := row[Date]
@@ -96,13 +106,13 @@ func readTest(filepath, checkDate string) (TestingRow, error) {
 		}
 		unique, err := strconv.ParseFloat(row[UniqueTested], 64)
 		if err != nil {
-			log.Printf("scan unique (%s) error: %v\n", row[UniqueTested], err)
+			fmt.Printf("scan unique (%s) error: %v\n", row[UniqueTested], err)
 			continue
 		}
 		test.UniqueTested += unique
 		positive, err := strconv.ParseFloat(row[Positive], 64)
 		if err != nil {
-			log.Printf("scan positive (%s) error: %v\n", row[Positive], err)
+			fmt.Printf("scan positive (%s) error: %v\n", row[Positive], err)
 		}
 		test.Positive += positive
 
