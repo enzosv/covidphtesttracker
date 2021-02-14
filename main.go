@@ -105,6 +105,7 @@ func readTest(filepath, checkDate string) (TestingRow, error) {
 			continue
 		}
 		if row[UniqueTested] == "" {
+			fmt.Printf("blank unique with %s positive\n", row[Positive])
 			continue
 		}
 		unique, err := strconv.ParseFloat(row[UniqueTested], 64)
