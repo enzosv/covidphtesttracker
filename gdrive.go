@@ -84,32 +84,32 @@ func (c GDriveConfig) getFileUrl(folderID, mime, fileSubstring string) (string, 
 	return "", fmt.Errorf("gdrive: file with substring %s not found", fileSubstring)
 }
 
-func (c GDriveConfig) download(folderID, downloadPath, mime, substring string) error {
+func (c GDriveConfig) download(folderID, downloadPath, mime, substring string) (string, error) {
 	log.Printf("\n\t[INFO] Downloading %s\n\n", substring)
 	url, err := c.getFileUrl(folderID, mime, substring)
 	if err != nil {
-		return err
+		return "", err
 	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return fmt.Errorf("gdrive: error constructing %s download request %w", substring, err)
+		return "", fmt.Errorf("gdrive: error constructing %s download request %w", substring, err)
 	}
 	req.Header.Add("Accept", mime)
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("gdrive: error performing %s download request %w", substring, err)
+		return "", fmt.Errorf("gdrive: error performing %s download request %w", substring, err)
 	}
 	defer res.Body.Close()
 	out, err := os.Create(downloadPath)
 	if err != nil {
-		return fmt.Errorf("gdrive: error allocating %s %w", substring, err)
+		return "", fmt.Errorf("gdrive: error allocating %s %w", substring, err)
 	}
 	defer out.Close()
 	_, err = io.Copy(out, res.Body)
 	if err != nil {
-		return fmt.Errorf("gdrive: error downloading %s %w", substring, err)
+		return "", fmt.Errorf("gdrive: error downloading %s %w", substring, err)
 	}
-	return nil
+	return url, nil
 }
 
 func (c GDriveConfig) GetReadmeLinks(date string) ([]string, error) {
@@ -121,15 +121,14 @@ func (c GDriveConfig) GetReadmeLinks(date string) ([]string, error) {
 	}
 	folderID := getFolderID(*redirected)
 	defer os.Remove(pdfPath)
-	err = c.download(folderID, pdfPath, "application/pdf", c.ReadmeSubstring)
+	_, err = c.download(folderID, pdfPath, "application/pdf", c.ReadmeSubstring)
 	if err != nil {
 		return nil, err
 	}
 	return findSubstringInPDF(pdfPath, c.LinkSubstring)
 }
 
-func (c GDriveConfig) GetTestFolderLink(links []string, csvPath string) (string, error) {
-	link := ""
+func (c GDriveConfig) GetTestFolderLink(links []string, csvPath string) (string, string, error) {
 	var err error
 	for _, l := range links {
 		redirected, err := getRedirectURL(l)
@@ -138,14 +137,12 @@ func (c GDriveConfig) GetTestFolderLink(links []string, csvPath string) (string,
 			continue
 		}
 		folderID := getFolderID(*redirected)
-		err = c.download(folderID, csvPath, "text/csv", c.TestSubstring)
+		fileurl, err := c.download(folderID, csvPath, "text/csv", c.TestSubstring)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
-		err = nil
-		link = redirected.String()
-		break
+		return redirected.String(), fileurl, nil
 	}
-	return link, err
+	return "", "", err
 }

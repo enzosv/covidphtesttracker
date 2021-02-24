@@ -29,8 +29,8 @@ type Config struct {
 
 func main() {
 	configPath := flag.String("c", "config.json", "Config file")
-	// date defaults to 2 days ago
-	date := flag.String("d", time.Unix(time.Now().Unix()-172800, 0).Format("2006-01-02"), "Date to check")
+	// date defaults to yesterday
+	date := flag.String("d", time.Unix(time.Now().Unix()-86400, 0).Format("2006-01-02"), "Date to check")
 	flag.Parse()
 	if *date == "" || *configPath == "" {
 		flag.PrintDefaults()
@@ -57,7 +57,7 @@ func ProcessTesting(config Config, date string) error {
 
 	csvPath := fmt.Sprintf("%s.csv", date)
 	defer os.Remove(csvPath)
-	link, err := config.GDriveConfig.GetTestFolderLink(links, csvPath)
+	folder, file, err := config.GDriveConfig.GetTestFolderLink(links, csvPath)
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func ProcessTesting(config Config, date string) error {
 	if err != nil {
 		return fmt.Errorf("Invalid date (%s) %w", date, err)
 	}
-	message := fmt.Sprintf("[%s](%s)\n*%.2f%%* positivity `(%.0f/%.0f)`", t.Format("Jan 2, 2006"), link, test.Positive*100/test.UniqueTested, test.Positive, test.UniqueTested)
+	message := fmt.Sprintf("[%s](%s)\n*%.2f%%* positivity `(%.0f/%.0f)`", t.Format("Jan 2, 2006"), folder, test.Positive*100/test.UniqueTested, test.Positive, test.UniqueTested, file)
 	log.Printf("\n\t[INFO] Sending Message:\n\t%s", message)
 
 	sendMessage(config.TelegramConfig, message)
