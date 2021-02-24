@@ -57,7 +57,7 @@ func ProcessTesting(config Config, date string) error {
 
 	csvPath := fmt.Sprintf("%s.csv", date)
 	defer os.Remove(csvPath)
-	folder, file, err := config.GDriveConfig.GetTestFolderLink(links, csvPath)
+	folder, _, err := config.GDriveConfig.GetTestFolderLink(links, csvPath)
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func ProcessTesting(config Config, date string) error {
 	if err != nil {
 		return fmt.Errorf("Invalid date (%s) %w", date, err)
 	}
-	message := fmt.Sprintf("[%s](%s)\n*%.2f%%* positivity `(%.0f/%.0f)`", t.Format("Jan 2, 2006"), folder, test.Positive*100/test.UniqueTested, test.Positive, test.UniqueTested, file)
+	message := fmt.Sprintf("[%s](%s)\n*%.2f%%* positivity `(%.0f/%.0f)`", t.Format("Jan 2, 2006"), folder, test.Positive*100/test.UniqueTested, test.Positive, test.UniqueTested)
 	log.Printf("\n\t[INFO] Sending Message:\n\t%s", message)
 
 	sendMessage(config.TelegramConfig, message)
